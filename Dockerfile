@@ -1,4 +1,4 @@
-FROM apify/actor-node:20
+FROM apify/actor-node-puppeteer-chrome:20
 
 # Copy package files first for better caching
 COPY package*.json ./
