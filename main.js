@@ -37,8 +37,8 @@ Actor.main(async () => {
                     // Try multiple approaches to find the summary element
                     let summaryElement = null;
                     
-                    // Approach 1: Look for div with the specific className pattern
-                    summaryElement = await page.$('div[class*="grid relative before:block before:content-[attr(data-value)]"]');
+                    // Approach 1: Look for div with the full className
+                    summaryElement = await page.$('div[class*="grid relative before:block before:content-[attr(data-value)] before:whitespace-pre-wrap before:invisible before:col-start-1 before:col-end-2 before:row-start-1 before:row-end-2 ml-8"]');
                     if (summaryElement) {
                         console.log('SUCCESS: Found summary element with className pattern');
                     } else {
