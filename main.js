@@ -34,25 +34,36 @@ Actor.main(async () => {
                 try {
                     console.log('=== ATTEMPTING TO SCRAPE SUMMARY ===');
                     
-                    // Try to find the specific div with the data-value attribute
-                    const summaryElement = await page.$('div.grid.relative.before\\:block.before\\:content-\\[attr\\(data-value\\)\\].before\\:whitespace-pre-wrap.before\\:invisible.before\\:col-start-1.before\\:col-end-2.before\\:row-start-1.before\\:row-end-2.ml-8');
+                    // Try multiple approaches to find the summary element
+                    let summaryElement = null;
                     
+                    // Approach 1: Look for div with the specific className pattern
+                    summaryElement = await page.$('div[class*="grid relative before:block before:content-[attr(data-value)]"]');
                     if (summaryElement) {
-                        console.log('SUCCESS: Found summary element with specific selector');
-                        summary = await summaryElement.evaluate(el => el.getAttribute('data-value') || el.textContent || '');
-                        console.log('Summary extracted:', summary);
+                        console.log('SUCCESS: Found summary element with className pattern');
                     } else {
-                        console.log('FAILED: Could not find summary element with specific selector');
+                        console.log('FAILED: Could not find element with className pattern');
                         
-                        // Try a simpler approach - look for any div with data-value attribute
-                        const dataValueElement = await page.$('div[data-value]');
-                        if (dataValueElement) {
+                        // Approach 2: Look for div with data-value attribute
+                        summaryElement = await page.$('div[data-value]');
+                        if (summaryElement) {
                             console.log('SUCCESS: Found div with data-value attribute');
-                            summary = await dataValueElement.evaluate(el => el.getAttribute('data-value') || el.textContent || '');
-                            console.log('Summary from data-value:', summary);
                         } else {
                             console.log('FAILED: No div with data-value attribute found');
+                            
+                            // Approach 3: Look for any element with the key className parts
+                            summaryElement = await page.$('div[class*="before:content-[attr(data-value)]"]');
+                            if (summaryElement) {
+                                console.log('SUCCESS: Found element with before:content-[attr(data-value)] pattern');
+                            } else {
+                                console.log('FAILED: No element with before:content-[attr(data-value)] pattern found');
+                            }
                         }
+                    }
+                    
+                    if (summaryElement) {
+                        summary = await summaryElement.evaluate(el => el.getAttribute('data-value') || el.textContent || '');
+                        console.log('Summary extracted:', summary);
                     }
                 } catch (error) {
                     console.log('ERROR: Error extracting summary:', error.message);
