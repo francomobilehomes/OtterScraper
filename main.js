@@ -30,12 +30,16 @@ Actor.main(async () => {
                 await new Promise(resolve => setTimeout(resolve, 3000));
                 
                 let summary = "Unable to scrape";
+                let pageTitle = "Unknown Title";
                 
                 try {
                     console.log('=== TARGETING TRANSCRIPT ELEMENTS ===');
                     
                     // Wait for all content to load
                     await new Promise(resolve => setTimeout(resolve, 5000));
+                    
+                    // Get the page title first
+                    pageTitle = await page.title();
                     
                     // Target the specific transcript element and related elements
                     const transcriptData = await page.evaluate(() => {
@@ -107,9 +111,6 @@ Actor.main(async () => {
                     
                     // Use the transcript text as our summary
                     summary = transcriptData.allTranscriptText || transcriptData.transcriptText || 'No transcript found';
-                    
-                    // Get the page title
-                    const pageTitle = await page.title();
                     
                     console.log('=== TRANSCRIPT EXTRACTION RESULTS ===');
                     console.log('Main transcript text length:', transcriptData.transcriptText.length);
