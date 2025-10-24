@@ -145,6 +145,7 @@ Actor.main(async () => {
                 // Save the result
                 const result = {
                     url: request.url,
+                    title: pageTitle || 'Unknown Title',
                     summary: summary,
                     scrapedAt: new Date().toISOString()
                 };
@@ -159,6 +160,7 @@ Actor.main(async () => {
                 // Save error result
                 const errorResult = {
                     url: request.url,
+                    title: 'Unknown Title',
                     summary: "Unable to scrape",
                     error: error.message,
                     scrapedAt: new Date().toISOString()
@@ -173,6 +175,7 @@ Actor.main(async () => {
             
             const errorResult = {
                 url: request.url,
+                title: 'Unknown Title',
                 summary: "Unable to scrape",
                 error: error.message,
                 scrapedAt: new Date().toISOString()
