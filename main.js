@@ -42,17 +42,27 @@ Actor.main(async () => {
                     // Get the page title first
                     pageTitle = await page.title();
                     
-                    // Try to get the creation date
+                    // Try to get the creation date (second occurrence)
                     try {
-                        const dateElement = await page.$('span[data-label="true"].flex.truncate.only\\:mx-auto.px-0\\.5');
-                        if (dateElement) {
-                            const dateText = await page.evaluate(el => el.textContent || el.innerText || '', dateElement);
+                        const dateElements = await page.$$('span[data-label="true"].flex.truncate.only\\:mx-auto.px-0\\.5');
+                        console.log(`Found ${dateElements.length} date elements`);
+                        
+                        if (dateElements.length >= 2) {
+                            // Use the second element (index 1)
+                            const dateText = await page.evaluate(el => el.textContent || el.innerText || '', dateElements[1]);
                             if (dateText && dateText.trim()) {
                                 createdDate = dateText.trim();
-                                console.log('Found creation date:', createdDate);
+                                console.log('Found creation date (second element):', createdDate);
+                            }
+                        } else if (dateElements.length === 1) {
+                            // Fallback to first element if only one found
+                            const dateText = await page.evaluate(el => el.textContent || el.innerText || '', dateElements[0]);
+                            if (dateText && dateText.trim()) {
+                                createdDate = dateText.trim();
+                                console.log('Found creation date (first element):', createdDate);
                             }
                         } else {
-                            console.log('Date element not found');
+                            console.log('No date elements found');
                         }
                     } catch (dateError) {
                         console.log('Error extracting date:', dateError.message);
