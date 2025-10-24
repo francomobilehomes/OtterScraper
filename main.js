@@ -108,9 +108,6 @@ Actor.main(async () => {
                     // Use the transcript text as our summary
                     summary = transcriptData.allTranscriptText || transcriptData.transcriptText || 'No transcript found';
                     
-                    // Get the page title
-                    const pageTitle = await page.title();
-                    
                     console.log('=== TRANSCRIPT EXTRACTION RESULTS ===');
                     console.log('Main transcript text length:', transcriptData.transcriptText.length);
                     console.log('Combined transcript text length:', transcriptData.allTranscriptText.length);
@@ -136,20 +133,19 @@ Actor.main(async () => {
                     console.log('ERROR: Error extracting transcript:', error.message);
                 }
                 
-                // Clean up the transcript
+                // Clean up the summary
                 if (summary && summary.trim() && summary !== "Unable to scrape") {
                     summary = summary.trim();
                 } else {
                     summary = "Unable to scrape";
                 }
                 
-                console.log('Final transcript result:', summary);
+                console.log('Final summary result:', summary);
                 
                 // Save the result
                 const result = {
                     url: request.url,
-                    title: pageTitle || 'Unknown Title',
-                    transcript: summary,
+                    summary: summary,
                     scrapedAt: new Date().toISOString()
                 };
                 
@@ -163,8 +159,7 @@ Actor.main(async () => {
                 // Save error result
                 const errorResult = {
                     url: request.url,
-                    title: 'Unknown Title',
-                    transcript: "Unable to scrape",
+                    summary: "Unable to scrape",
                     error: error.message,
                     scrapedAt: new Date().toISOString()
                 };
@@ -178,8 +173,7 @@ Actor.main(async () => {
             
             const errorResult = {
                 url: request.url,
-                title: 'Unknown Title',
-                transcript: "Unable to scrape",
+                summary: "Unable to scrape",
                 error: error.message,
                 scrapedAt: new Date().toISOString()
             };
