@@ -1,0 +1,15 @@
+{
+  "title": "Otter.ai Scraper Input",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "url": {
+      "title": "Otter.ai URL",
+      "type": "string",
+      "description": "The Otter.ai conversation URL to scrape",
+      "pattern": "^https://otter\\.ai/u/.*",
+      "example": "https://otter.ai/u/06FBGY1S0ZF_GnmZs8CQWWiGf4Q?utm_source=copy_url"
+    }
+  },
+  "required": ["url"]
+}

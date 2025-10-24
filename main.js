@@ -1,16 +1,8 @@
-const puppeteer = require('puppeteer');
-const fs = require('fs');
+const Apify = require('apify');
 
-async function main() {
-    // Get input from file
-    const inputFile = process.env.APIFY_INPUT_FILE || 'input.json';
-    let input;
-    
-    if (fs.existsSync(inputFile)) {
-        input = JSON.parse(fs.readFileSync(inputFile, 'utf8'));
-    } else {
-        throw new Error('Please provide a URL in the input. Expected format: { "url": "https://otter.ai/u/..." }');
-    }
+Apify.main(async () => {
+    // Get input from Apify
+    const input = await Apify.getInput();
     
     if (!input || !input.url) {
         throw new Error('Please provide a URL in the input. Expected format: { "url": "https://otter.ai/u/..." }');
@@ -18,11 +10,12 @@ async function main() {
 
     console.log('Starting Otter.ai scraper with URL:', input.url);
 
-    // Launch Puppeteer
-    const browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+    // Create a dataset to store results
+    const dataset = await Apify.openDataset();
+
+    // Use Apify's Puppeteer utilities
+    const { launchPuppeteer } = Apify.utils;
+    const browser = await launchPuppeteer();
 
     try {
         const page = await browser.newPage();
@@ -89,8 +82,8 @@ async function main() {
                 scrapedAt: new Date().toISOString()
             };
             
-            // Save to file
-            fs.writeFileSync('output.json', JSON.stringify(result, null, 2));
+            // Save to Apify dataset
+            await dataset.pushData(result);
             console.log('Result saved:', result);
             
         } catch (error) {
@@ -104,8 +97,8 @@ async function main() {
                 scrapedAt: new Date().toISOString()
             };
             
-            // Save to file
-            fs.writeFileSync('output.json', JSON.stringify(errorResult, null, 2));
+            // Save to Apify dataset
+            await dataset.pushData(errorResult);
         }
         
     } finally {
@@ -113,7 +106,4 @@ async function main() {
     }
 
     console.log('Scraping completed!');
-}
-
-// Run the main function
-main().catch(console.error);
+});
