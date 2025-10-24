@@ -29,56 +29,48 @@ Actor.main(async () => {
                 // Wait a bit more for dynamic content to load
                 await new Promise(resolve => setTimeout(resolve, 3000));
                 
-                let title = "Unable to scrape";
+                let summary = "Unable to scrape";
                 
                 try {
-                    // Try the specific selector path first
-                    const titleElement = await page.$('#main-content > div.otter-main-content__container > app-conversation-detail > div:nth-child(1) > app-speech-header > div > div > div.flex.items-center.justify-between > form > input');
+                    console.log('=== ATTEMPTING TO SCRAPE SUMMARY ===');
                     
-                    if (titleElement) {
-                        title = await titleElement.evaluate(el => el.value || el.textContent || '');
+                    // Try to find the specific div with the data-value attribute
+                    const summaryElement = await page.$('div.grid.relative.before\\:block.before\\:content-\\[attr\\(data-value\\)\\].before\\:whitespace-pre-wrap.before\\:invisible.before\\:col-start-1.before\\:col-end-2.before\\:row-start-1.before\\:row-end-2.ml-8');
+                    
+                    if (summaryElement) {
+                        console.log('SUCCESS: Found summary element with specific selector');
+                        summary = await summaryElement.evaluate(el => el.getAttribute('data-value') || el.textContent || '');
+                        console.log('Summary extracted:', summary);
                     } else {
-                        // Try alternative selector by class
-                        const titleByClass = await page.$('input.text-3xl.px-2.rounded-sm.truncate.bg-white.border.border-transparent.text-default.w-full.transition-colors.hover\\:bg-\\[\\#F6F7F9\\].focus\\:bg-default.focus\\:border-subtle.focus\\:outline-none');
+                        console.log('FAILED: Could not find summary element with specific selector');
                         
-                        if (titleByClass) {
-                            title = await titleByClass.evaluate(el => el.value || el.textContent || '');
+                        // Try a simpler approach - look for any div with data-value attribute
+                        const dataValueElement = await page.$('div[data-value]');
+                        if (dataValueElement) {
+                            console.log('SUCCESS: Found div with data-value attribute');
+                            summary = await dataValueElement.evaluate(el => el.getAttribute('data-value') || el.textContent || '');
+                            console.log('Summary from data-value:', summary);
                         } else {
-                            // Try a more general approach - look for any input with the specific classes
-                            const generalTitle = await page.evaluate(() => {
-                                const inputs = document.querySelectorAll('input');
-                                for (let input of inputs) {
-                                    if (input.classList.contains('text-3xl') && 
-                                        input.classList.contains('px-2') && 
-                                        input.classList.contains('rounded-sm')) {
-                                        return input.value || input.textContent || '';
-                                    }
-                                }
-                                return null;
-                            });
-                            
-                            if (generalTitle) {
-                                title = generalTitle;
-                            }
+                            console.log('FAILED: No div with data-value attribute found');
                         }
                     }
                 } catch (error) {
-                    console.log('Error extracting title:', error.message);
+                    console.log('ERROR: Error extracting summary:', error.message);
                 }
                 
-                // Clean up the title
-                if (title && title.trim() && title !== "Unable to scrape") {
-                    title = title.trim();
+                // Clean up the summary
+                if (summary && summary.trim() && summary !== "Unable to scrape") {
+                    summary = summary.trim();
                 } else {
-                    title = "Unable to scrape";
+                    summary = "Unable to scrape";
                 }
                 
-                console.log('Extracted title:', title);
+                console.log('Final summary result:', summary);
                 
                 // Save the result
                 const result = {
                     url: request.url,
-                    title: title,
+                    summary: summary,
                     scrapedAt: new Date().toISOString()
                 };
                 
@@ -92,7 +84,7 @@ Actor.main(async () => {
                 // Save error result
                 const errorResult = {
                     url: request.url,
-                    title: "Unable to scrape",
+                    summary: "Unable to scrape",
                     error: error.message,
                     scrapedAt: new Date().toISOString()
                 };
@@ -106,7 +98,7 @@ Actor.main(async () => {
             
             const errorResult = {
                 url: request.url,
-                title: "Unable to scrape",
+                summary: "Unable to scrape",
                 error: error.message,
                 scrapedAt: new Date().toISOString()
             };
