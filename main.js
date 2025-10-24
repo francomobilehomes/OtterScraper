@@ -27,7 +27,7 @@ Actor.main(async () => {
                 await page.goto(request.url, { waitUntil: 'networkidle0' });
                 
                 // Wait a bit more for dynamic content to load
-                await page.waitForTimeout(3000);
+                await new Promise(resolve => setTimeout(resolve, 3000));
                 
                 let title = "Unable to scrape";
                 
