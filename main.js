@@ -1,4 +1,5 @@
 const { Actor } = require('apify');
+const { PuppeteerCrawler } = require('crawlee');
 
 Actor.main(async () => {
     // Get input from Apify
@@ -11,7 +12,7 @@ Actor.main(async () => {
     console.log('Starting Otter.ai scraper with URL:', input.url);
 
     // Create a PuppeteerCrawler
-    const crawler = new Actor.PuppeteerCrawler({
+    const crawler = new PuppeteerCrawler({
         launchContext: {
             launchOptions: {
                 headless: true,
