@@ -31,6 +31,7 @@ Actor.main(async () => {
                 
                 let summary = "Unable to scrape";
                 let pageTitle = "Unknown Title";
+                let createdDate = "Unknown Date";
                 
                 try {
                     console.log('=== TARGETING TRANSCRIPT ELEMENTS ===');
@@ -40,6 +41,22 @@ Actor.main(async () => {
                     
                     // Get the page title first
                     pageTitle = await page.title();
+                    
+                    // Try to get the creation date
+                    try {
+                        const dateElement = await page.$('span[data-label="true"].flex.truncate.only\\:mx-auto.px-0\\.5');
+                        if (dateElement) {
+                            const dateText = await page.evaluate(el => el.textContent || el.innerText || '', dateElement);
+                            if (dateText && dateText.trim()) {
+                                createdDate = dateText.trim();
+                                console.log('Found creation date:', createdDate);
+                            }
+                        } else {
+                            console.log('Date element not found');
+                        }
+                    } catch (dateError) {
+                        console.log('Error extracting date:', dateError.message);
+                    }
                     
                     // Target the specific transcript element and related elements
                     const transcriptData = await page.evaluate(() => {
@@ -146,13 +163,14 @@ Actor.main(async () => {
                 
                 console.log('Final summary result:', summary);
                 
-                // Save the result
-                const result = {
-                    url: request.url,
-                    title: pageTitle || 'Unknown Title',
-                    summary: summary,
-                    scrapedAt: new Date().toISOString()
-                };
+                    // Save the result
+                    const result = {
+                        url: request.url,
+                        title: pageTitle || 'Unknown Title',
+                        summary: summary,
+                        createdDate: createdDate,
+                        scrapedAt: new Date().toISOString()
+                    };
                 
                 // Save to Apify dataset
                 await Actor.pushData(result);
@@ -161,14 +179,15 @@ Actor.main(async () => {
             } catch (error) {
                 console.error('Error processing page:', error);
                 
-                // Save error result
-                const errorResult = {
-                    url: request.url,
-                    title: 'Unknown Title',
-                    summary: "Unable to scrape",
-                    error: error.message,
-                    scrapedAt: new Date().toISOString()
-                };
+                    // Save error result
+                    const errorResult = {
+                        url: request.url,
+                        title: 'Unknown Title',
+                        summary: "Unable to scrape",
+                        createdDate: "Unknown Date",
+                        error: error.message,
+                        scrapedAt: new Date().toISOString()
+                    };
                 
                 // Save to Apify dataset
                 await Actor.pushData(errorResult);
@@ -181,6 +200,7 @@ Actor.main(async () => {
                 url: request.url,
                 title: 'Unknown Title',
                 summary: "Unable to scrape",
+                createdDate: "Unknown Date",
                 error: error.message,
                 scrapedAt: new Date().toISOString()
             };
