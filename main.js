@@ -32,126 +32,105 @@ Actor.main(async () => {
                 let summary = "Unable to scrape";
                 
                 try {
-                    console.log('=== SCRAPING BODY TEXT WITH ELEMENT TRACKING ===');
+                    console.log('=== TARGETING TRANSCRIPT ELEMENTS ===');
                     
                     // Wait for all content to load
                     await new Promise(resolve => setTimeout(resolve, 5000));
                     
-                    // Get body text with element source tracking
-                    const textWithSources = await page.evaluate(() => {
+                    // Target the specific transcript element and related elements
+                    const transcriptData = await page.evaluate(() => {
                         const result = {
-                            fullText: '',
-                            elementSources: [],
-                            textChunks: []
+                            transcriptText: '',
+                            transcriptElements: [],
+                            allTranscriptText: ''
                         };
                         
-                        // Get all text-containing elements
-                        const textElements = document.querySelectorAll('*');
-                        let currentPosition = 0;
+                        // First, try to get the main transcript block
+                        const transcriptBlock = document.getElementById('transcript-block');
+                        if (transcriptBlock) {
+                            console.log('Found transcript-block element');
+                            const blockText = transcriptBlock.textContent || transcriptBlock.innerText || '';
+                            result.transcriptText = blockText;
+                            result.transcriptElements.push({
+                                id: 'transcript-block',
+                                className: transcriptBlock.className,
+                                textLength: blockText.length,
+                                textPreview: blockText.substring(0, 200)
+                            });
+                        }
                         
-                        textElements.forEach((element, index) => {
-                            // Skip script, style, and other non-text elements
-                            if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'META', 'LINK', 'IMG', 'SVG', 'CANVAS'].includes(element.tagName)) {
-                                return;
-                            }
-                            
-                            const text = element.textContent || element.innerText || '';
-                            const trimmedText = text.trim();
-                            
-                            // Only process elements with meaningful text (more than 10 characters)
-                            if (trimmedText.length > 10) {
-                                // Check if this text is not just a duplicate of parent text
-                                const parentText = element.parentElement ? (element.parentElement.textContent || '').trim() : '';
-                                if (trimmedText !== parentText) {
-                                    const elementInfo = {
-                                        tagName: element.tagName,
-                                        className: element.className,
-                                        id: element.id,
-                                        textLength: trimmedText.length,
-                                        textPreview: trimmedText.substring(0, 100),
-                                        startPosition: currentPosition,
-                                        endPosition: currentPosition + trimmedText.length,
-                                        attributes: {
-                                            'data-testid': element.getAttribute('data-testid'),
-                                            'data-value': element.getAttribute('data-value'),
-                                            'role': element.getAttribute('role'),
-                                            'aria-label': element.getAttribute('aria-label')
-                                        },
-                                        isVisible: element.offsetParent !== null,
-                                        boundingRect: element.getBoundingClientRect()
-                                    };
-                                    
-                                    result.elementSources.push(elementInfo);
-                                    result.textChunks.push({
-                                        text: trimmedText,
-                                        elementIndex: result.elementSources.length - 1
-                                    });
-                                    
-                                    currentPosition += trimmedText.length + 1; // +1 for space
-                                }
+                        // Look for other transcript-related elements
+                        const transcriptSelectors = [
+                            '[id*="transcript"]',
+                            '[class*="transcript"]',
+                            '[data-testid*="transcript"]',
+                            '[role="transcript"]',
+                            '[aria-label*="transcript" i]',
+                            'div[class*="otter-scrollbar"]',
+                            'div[class*="overflow-y-auto"]'
+                        ];
+                        
+                        transcriptSelectors.forEach(selector => {
+                            try {
+                                const elements = document.querySelectorAll(selector);
+                                elements.forEach(element => {
+                                    const text = element.textContent || element.innerText || '';
+                                    if (text.length > 100) { // Only significant text elements
+                                        result.transcriptElements.push({
+                                            selector: selector,
+                                            tagName: element.tagName,
+                                            id: element.id,
+                                            className: element.className,
+                                            textLength: text.length,
+                                            textPreview: text.substring(0, 200),
+                                            isVisible: element.offsetParent !== null
+                                        });
+                                        
+                                        // Add to combined transcript text if it's not already included
+                                        if (!result.allTranscriptText.includes(text.substring(0, 100))) {
+                                            result.allTranscriptText += text + '\n';
+                                        }
+                                    }
+                                });
+                            } catch (e) {
+                                console.log(`Selector ${selector} failed:`, e.message);
                             }
                         });
                         
-                        // Get the full body text
-                        result.fullText = document.body.textContent || document.body.innerText || '';
+                        // If we found the main transcript block, use that
+                        if (result.transcriptText) {
+                            result.allTranscriptText = result.transcriptText;
+                        }
                         
                         return result;
                     });
                     
-                    // Set the summary to the full text
-                    summary = textWithSources.fullText;
+                    // Use the transcript text as our summary
+                    summary = transcriptData.allTranscriptText || transcriptData.transcriptText || 'No transcript found';
                     
-                    console.log('=== ELEMENT SOURCE ANALYSIS ===');
-                    console.log('Total body text length:', summary.length);
-                    console.log('Number of text elements found:', textWithSources.elementSources.length);
+                    console.log('=== TRANSCRIPT EXTRACTION RESULTS ===');
+                    console.log('Main transcript text length:', transcriptData.transcriptText.length);
+                    console.log('Combined transcript text length:', transcriptData.allTranscriptText.length);
+                    console.log('Number of transcript elements found:', transcriptData.transcriptElements.length);
                     
-                    // Log the most significant text elements (by length)
-                    const significantElements = textWithSources.elementSources
-                        .sort((a, b) => b.textLength - a.textLength)
-                        .slice(0, 20); // Top 20 elements by text length
-                    
-                    console.log('=== TOP 20 ELEMENTS BY TEXT LENGTH ===');
-                    significantElements.forEach((element, index) => {
-                        console.log(`\n--- Element ${index + 1} ---`);
+                    console.log('\n=== TRANSCRIPT ELEMENTS FOUND ===');
+                    transcriptData.transcriptElements.forEach((element, index) => {
+                        console.log(`\n--- Transcript Element ${index + 1} ---`);
+                        console.log(`Selector: ${element.selector || 'N/A'}`);
                         console.log(`Tag: ${element.tagName}`);
+                        console.log(`ID: ${element.id || 'N/A'}`);
                         console.log(`Class: ${element.className}`);
-                        console.log(`ID: ${element.id}`);
                         console.log(`Text Length: ${element.textLength}`);
                         console.log(`Text Preview: ${element.textPreview}`);
-                        console.log(`Position: ${element.startPosition}-${element.endPosition}`);
                         console.log(`Visible: ${element.isVisible}`);
-                        console.log(`Attributes:`, element.attributes);
-                        console.log(`Bounding Rect:`, element.boundingRect);
                     });
                     
-                    // Look for elements with specific patterns that might be important
-                    const importantElements = textWithSources.elementSources.filter(el => 
-                        el.attributes['data-value'] || 
-                        el.attributes['data-testid'] ||
-                        el.className.includes('summary') ||
-                        el.className.includes('content') ||
-                        el.className.includes('transcript') ||
-                        el.className.includes('conversation') ||
-                        el.textLength > 200
-                    );
-                    
-                    console.log('\n=== IMPORTANT ELEMENTS (with data attributes or key classes) ===');
-                    importantElements.forEach((element, index) => {
-                        console.log(`\n--- Important Element ${index + 1} ---`);
-                        console.log(`Tag: ${element.tagName}`);
-                        console.log(`Class: ${element.className}`);
-                        console.log(`ID: ${element.id}`);
-                        console.log(`Text Length: ${element.textLength}`);
-                        console.log(`Text Preview: ${element.textPreview}`);
-                        console.log(`Attributes:`, element.attributes);
-                    });
-                    
-                    console.log('\n=== FULL TEXT PREVIEWS ===');
-                    console.log('First 500 chars:', summary.substring(0, 500));
-                    console.log('Last 500 chars:', summary.substring(Math.max(0, summary.length - 500)));
+                    console.log('\n=== TRANSCRIPT TEXT PREVIEW ===');
+                    console.log('First 1000 chars:', summary.substring(0, 1000));
+                    console.log('Last 1000 chars:', summary.substring(Math.max(0, summary.length - 1000)));
                     
                 } catch (error) {
-                    console.log('ERROR: Error extracting body text with element tracking:', error.message);
+                    console.log('ERROR: Error extracting transcript:', error.message);
                 }
                 
                 // Clean up the summary
