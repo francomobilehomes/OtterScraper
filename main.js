@@ -2,7 +2,7 @@ const Apify = require('apify');
 
 async function main() {
     // Get input from Apify
-    const input = await Apify.getInput();
+    const input = JSON.parse(process.env.APIFY_INPUT || '{}');
     
     if (!input || !input.url) {
         throw new Error('Please provide a URL in the input. Expected format: { "url": "https://otter.ai/u/..." }');
