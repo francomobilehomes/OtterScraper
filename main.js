@@ -122,6 +122,15 @@ Actor.main(async () => {
                     try {
                         // Look for three-dot button (common patterns)
                         const threeDotSelectors = [
+                            // Specific Material Design more_horiz icon
+                            'mat-icon:has-text("more_horiz")',
+                            'mat-icon[class*="mat-icon"]:has-text("more_horiz")',
+                            'mat-icon[data-mat-icon-type="font"]:has-text("more_horiz")',
+                            'mat-icon[role="img"]:has-text("more_horiz")',
+                            // Parent button containing the mat-icon
+                            'button:has(mat-icon:has-text("more_horiz"))',
+                            'button mat-icon:has-text("more_horiz")',
+                            // Generic patterns
                             'button[aria-label*="menu" i]',
                             'button[aria-label*="more" i]',
                             'button[aria-label*="options" i]',
