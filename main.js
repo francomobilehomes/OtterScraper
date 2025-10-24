@@ -1,18 +1,8 @@
-const Apify = require('apify');
+const { Actor } = require('apify');
 
-async function main() {
+Actor.main(async () => {
     // Get input from Apify
-    let input;
-    try {
-        input = JSON.parse(process.env.APIFY_INPUT || '{}');
-    } catch (error) {
-        console.log('Error parsing input:', error);
-        input = {};
-    }
-    
-    // Debug: Log what we received
-    console.log('Received input:', input);
-    console.log('APIFY_INPUT env var:', process.env.APIFY_INPUT);
+    const input = await Actor.getInput();
     
     if (!input || !input.url) {
         throw new Error('Please provide a URL in the input. Expected format: { "url": "https://otter.ai/u/..." }');
@@ -20,11 +10,8 @@ async function main() {
 
     console.log('Starting Otter.ai scraper with URL:', input.url);
 
-    // Create a dataset to store results
-    const dataset = await Apify.openDataset();
-
     // Create a PuppeteerCrawler
-    const crawler = new Apify.PuppeteerCrawler({
+    const crawler = new Actor.PuppeteerCrawler({
         launchContext: {
             launchOptions: {
                 headless: true,
@@ -95,7 +82,7 @@ async function main() {
                 };
                 
                 // Save to Apify dataset
-                await dataset.pushData(result);
+                await Actor.pushData(result);
                 console.log('Result saved:', result);
                 
             } catch (error) {
@@ -110,7 +97,7 @@ async function main() {
                 };
                 
                 // Save to Apify dataset
-                await dataset.pushData(errorResult);
+                await Actor.pushData(errorResult);
             }
         },
         async failedRequestHandler({ request, error }) {
@@ -123,7 +110,7 @@ async function main() {
                 scrapedAt: new Date().toISOString()
             };
             
-            await dataset.pushData(errorResult);
+            await Actor.pushData(errorResult);
         }
     });
 
@@ -137,7 +124,4 @@ async function main() {
     await crawler.run();
 
     console.log('Scraping completed!');
-}
-
-// Run the main function
-main().catch(console.error);
+});
