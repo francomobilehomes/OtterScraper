@@ -108,6 +108,9 @@ Actor.main(async () => {
                     // Use the transcript text as our summary
                     summary = transcriptData.allTranscriptText || transcriptData.transcriptText || 'No transcript found';
                     
+                    // Get the page title
+                    const pageTitle = await page.title();
+                    
                     console.log('=== TRANSCRIPT EXTRACTION RESULTS ===');
                     console.log('Main transcript text length:', transcriptData.transcriptText.length);
                     console.log('Combined transcript text length:', transcriptData.allTranscriptText.length);
