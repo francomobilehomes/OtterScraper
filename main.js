@@ -1,6 +1,6 @@
 const Apify = require('apify');
 
-Apify.main(async () => {
+async function main() {
     // Get input from Apify
     const input = await Apify.getInput();
     
@@ -127,4 +127,7 @@ Apify.main(async () => {
     await crawler.run();
 
     console.log('Scraping completed!');
-});
+}
+
+// Run the main function
+main().catch(console.error);
