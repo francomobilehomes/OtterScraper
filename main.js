@@ -2,7 +2,17 @@ const Apify = require('apify');
 
 async function main() {
     // Get input from Apify
-    const input = JSON.parse(process.env.APIFY_INPUT || '{}');
+    let input;
+    try {
+        input = JSON.parse(process.env.APIFY_INPUT || '{}');
+    } catch (error) {
+        console.log('Error parsing input:', error);
+        input = {};
+    }
+    
+    // Debug: Log what we received
+    console.log('Received input:', input);
+    console.log('APIFY_INPUT env var:', process.env.APIFY_INPUT);
     
     if (!input || !input.url) {
         throw new Error('Please provide a URL in the input. Expected format: { "url": "https://otter.ai/u/..." }');
