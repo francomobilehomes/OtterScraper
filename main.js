@@ -32,17 +32,101 @@ Actor.main(async () => {
                 let summary = "Unable to scrape";
                 
                 try {
+                    console.log('=== PAGE INSPECTION FOR DEBUGGING ===');
+                    
+                    // First, let's inspect the page structure
+                    const pageInfo = await page.evaluate(() => {
+                        const info = {
+                            title: document.title,
+                            url: window.location.href,
+                            bodyText: document.body.textContent.substring(0, 500),
+                            allDivs: [],
+                            elementsWithDataValue: [],
+                            elementsWithClassName: [],
+                            allClasses: new Set()
+                        };
+                        
+                        // Get all divs and their classes
+                        const divs = document.querySelectorAll('div');
+                        divs.forEach((div, index) => {
+                            if (index < 50) { // Limit to first 50 divs
+                                const divInfo = {
+                                    index: index,
+                                    className: div.className,
+                                    textContent: div.textContent.substring(0, 100),
+                                    hasDataValue: div.hasAttribute('data-value'),
+                                    dataValue: div.getAttribute('data-value')
+                                };
+                                info.allDivs.push(divInfo);
+                                
+                                // Collect all unique classes
+                                if (div.className) {
+                                    div.className.split(' ').forEach(cls => {
+                                        if (cls.trim()) info.allClasses.add(cls.trim());
+                                    });
+                                }
+                            }
+                        });
+                        
+                        // Get elements with data-value attribute
+                        const dataValueElements = document.querySelectorAll('[data-value]');
+                        dataValueElements.forEach((el, index) => {
+                            info.elementsWithDataValue.push({
+                                tagName: el.tagName,
+                                className: el.className,
+                                dataValue: el.getAttribute('data-value'),
+                                textContent: el.textContent.substring(0, 100)
+                            });
+                        });
+                        
+                        // Look for elements with specific class patterns
+                        const classPatterns = [
+                            'grid',
+                            'relative',
+                            'before:block',
+                            'before:content',
+                            'data-value',
+                            'ml-8'
+                        ];
+                        
+                        classPatterns.forEach(pattern => {
+                            const elements = document.querySelectorAll(`[class*="${pattern}"]`);
+                            elements.forEach((el, index) => {
+                                if (index < 10) { // Limit results
+                                    info.elementsWithClassName.push({
+                                        pattern: pattern,
+                                        tagName: el.tagName,
+                                        className: el.className,
+                                        textContent: el.textContent.substring(0, 100)
+                                    });
+                                }
+                            });
+                        });
+                        
+                        return info;
+                    });
+                    
+                    console.log('Page Title:', pageInfo.title);
+                    console.log('Page URL:', pageInfo.url);
+                    console.log('Body Text Preview:', pageInfo.bodyText);
+                    console.log('Elements with data-value attribute:', pageInfo.elementsWithDataValue);
+                    console.log('Elements with relevant class patterns:', pageInfo.elementsWithClassName);
+                    console.log('All unique classes found:', Array.from(pageInfo.allClasses).slice(0, 20));
+                    console.log('First 10 divs:', pageInfo.allDivs.slice(0, 10));
+                    
+                    console.log('=== END PAGE INSPECTION ===');
+                    
+                    // Now try to find the summary element based on what we found
                     console.log('=== ATTEMPTING TO SCRAPE SUMMARY ===');
                     
-                    // Try multiple approaches to find the summary element
                     let summaryElement = null;
                     
                     // Approach 1: Look for div with the full className
                     summaryElement = await page.$('div[class*="grid relative before:block before:content-[attr(data-value)] before:whitespace-pre-wrap before:invisible before:col-start-1 before:col-end-2 before:row-start-1 before:row-end-2 ml-8"]');
                     if (summaryElement) {
-                        console.log('SUCCESS: Found summary element with className pattern');
+                        console.log('SUCCESS: Found summary element with full className');
                     } else {
-                        console.log('FAILED: Could not find element with className pattern');
+                        console.log('FAILED: Could not find element with full className');
                         
                         // Approach 2: Look for div with data-value attribute
                         summaryElement = await page.$('div[data-value]');
@@ -66,7 +150,7 @@ Actor.main(async () => {
                         console.log('Summary extracted:', summary);
                     }
                 } catch (error) {
-                    console.log('ERROR: Error extracting summary:', error.message);
+                    console.log('ERROR: Error during page inspection or summary extraction:', error.message);
                 }
                 
                 // Clean up the summary
