@@ -8,8 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "apify": "^3.1.10",
-    "puppeteer": "^21.5.2"
+    "apify": "^3.1.10"
   },
   "keywords": [
     "apify",

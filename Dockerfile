@@ -4,7 +4,7 @@ FROM apify/actor-node:20
 COPY package*.json ./
 
 # Install dependencies with specific flags to avoid Puppeteer download issues
-RUN npm install --only=prod --no-optional --no-audit --no-fund
+RUN npm install --only=prod --no-optional --no-audit --no-fund --no-package-lock
 
 # Copy the rest of the application
 COPY . ./
